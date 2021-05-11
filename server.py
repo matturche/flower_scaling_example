@@ -2,7 +2,7 @@ import flwr as fl
 import torch
 import multiprocessing as mp
 import argparse
-from flower_helpers import set_weights, get_weights, Net, test
+from flower_helpers import set_weights, get_weights, Net, test, FedAvgMp
 
 
 """
@@ -19,17 +19,16 @@ Uncomment and comment the one you need depending if you need gpu or not
 to test your model fast enough.
 """
 DEVICE: str = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# DEVICE: str = "cpu" 
+# DEVICE: str = "cpu"
 model = None
+
 
 def get_eval_fn(model):
     """Get the evaluation function for server side.
 
     Parameters
     ----------
-    model
-        The model we want to evaluate.
-
+    modelreturn self.super()
     Returns
     -------
     evaluate
@@ -60,10 +59,7 @@ def get_eval_fn(model):
         # We receive the results through a shared dictionary
         return_dict = manager.dict()
         # Create the process
-        p = mp.Process(
-            target=test,
-            args=(weights, return_dict)
-        )
+        p = mp.Process(target=test, args=(weights, return_dict))
         # Start the process
         p.start()
         # Wait for it to end
@@ -81,6 +77,7 @@ def get_eval_fn(model):
         return float(loss), float(accuracy)
 
     return evaluate
+
 
 # Start Flower server for three rounds of federated learning
 if __name__ == "__main__":
@@ -112,13 +109,13 @@ if __name__ == "__main__":
     ac = int(args.ac)
     mec = int(args.mec)
     # Determine the fraction of clients we want to evaluate on
-    frac_eval = fc if mec/fc > 1 else mec/fc
+    frac_eval = fc if mec / fc > 1 else mec / fc
     # Set the start method for multiprocessing in case Python version is under 3.8.1
     mp.set_start_method("spawn")
     # Create a new model for testing
     net = Net().to(DEVICE)
     # Define the strategy
-    strategy = fl.server.strategy.FedAvg(
+    strategy = FedAvgMp(
         fraction_fit=float(fc / ac),
         fraction_eval=frac_eval,
         min_fit_clients=fc,
@@ -128,5 +125,5 @@ if __name__ == "__main__":
         initial_parameters=get_weights(net),
     )
     fl.server.start_server(
-        "[::]:8080", config={"num_rounds": 3}, strategy=strategy
+        "[::]:8080", config={"num_rounds": rounds}, strategy=strategy
     )

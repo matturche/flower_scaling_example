@@ -1,13 +1,16 @@
 from collections import OrderedDict
+from flwr.server.strategy import FedAvg
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
+
 # Model (simple CNN adapted from 'PyTorch: A 60 Minute Blitz')
 
 DEVICE: str = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 class Net(nn.Module):
     def __init__(self) -> None:
@@ -28,15 +31,18 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
+
 # Function to get the weights of a model
 def get_weights(model):
     return [val.cpu().numpy() for _, val in model.state_dict().items()]
+
 
 # Function to set the weights of a model
 def set_weights(model, weights) -> None:
     params_dict = zip(model.state_dict().keys(), weights)
     state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
     model.load_state_dict(state_dict, strict=True)
+
 
 def train(epochs, parameters, return_dict):
     """Train the network on the training set."""
@@ -95,3 +101,12 @@ def load_data(train=True):
     dataset = CIFAR10("./dataset", train=train, download=True, transform=transform)
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
     return dataloader
+
+
+class FedAvgMp(FedAvg):
+    """This class implements the FedAvg strategy for Multiprocessing context."""
+
+    def configure_evaluate(self, rnd, weights, client_manager):
+        """Configure the next round of evaluation. Returns None since evaluation is made server side.
+        You could comment this method if you want to keep the same behaviour as FedAvg."""
+        return None

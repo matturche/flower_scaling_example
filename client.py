@@ -1,8 +1,7 @@
-from collections import OrderedDict
 import flwr as fl
 import torch
 import multiprocessing as mp
-from flower_helpers import get_weights, set_weights, train, test
+from flower_helpers import train, test
 
 """
 If you get an error like: “failed to connect to all addresses” “grpc_status”:14 
@@ -25,10 +24,8 @@ def main():
 
     # Flower client
     class CifarClient(fl.client.NumPyClient):
-
-        def __init__(self, client_eval: bool = False):
+        def __init__(self):
             self.parameters = None
-            self.client_eval = client_eval
 
         def get_parameters(self):
             return self.parameters
@@ -43,10 +40,7 @@ def main():
             # We receive the results through a shared dictionary
             return_dict = manager.dict()
             # Create the process
-            p = mp.Process(
-                target=train,
-                args=(1, parameters, return_dict)
-            )
+            p = mp.Process(target=train, args=(1, parameters, return_dict))
             # Start the process
             p.start()
             # Wait for it to end
@@ -61,24 +55,17 @@ def main():
             data_size = return_dict["data_size"]
             # Del everything related to multiprocessing
             del (manager, return_dict, p)
-            # Set the new parameters
-            self.set_parameters(new_parameters)
             return new_parameters, data_size, {}
 
         def evaluate(self, parameters, config):
-            
-            if not self.client_eval:
-                return 1.0, 1, {"accuracy": 1.0}
+
             self.set_parameters(parameters)
             # Prepare multiprocess
             manager = mp.Manager()
             # We receive the results through a shared dictionary
             return_dict = manager.dict()
             # Create the process
-            p = mp.Process(
-                target=test,
-                args=(parameters, return_dict)
-            )
+            p = mp.Process(target=test, args=(parameters, return_dict))
             # Start the process
             p.start()
             # Wait for it to end
@@ -98,6 +85,7 @@ def main():
 
     # Start client
     fl.client.start_numpy_client("[::]:8080", client=CifarClient())
+
 
 if __name__ == "__main__":
     main()
