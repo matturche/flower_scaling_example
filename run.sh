@@ -11,7 +11,6 @@ sleep 5 # Sleep for N seconds to give the server enough time to start, increase 
 for ((nb=0; nb<$NBCLIENTS; nb++))
 do
     python client.py &
-    sleep 2 # Not mandatory sleep but can help relieve cpu memory if loading too much clients at the same time
 done
 
 

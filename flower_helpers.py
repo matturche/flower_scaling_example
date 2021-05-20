@@ -106,7 +106,7 @@ def load_data(train=True):
 class FedAvgMp(FedAvg):
     """This class implements the FedAvg strategy for Multiprocessing context."""
 
-    def configure_evaluate(self, rnd, weights, client_manager):
+    def configure_evaluate(self, rnd, parameters, client_manager):
         """Configure the next round of evaluation. Returns None since evaluation is made server side.
         You could comment this method if you want to keep the same behaviour as FedAvg."""
         return None

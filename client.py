@@ -1,5 +1,4 @@
 import flwr as fl
-import torch
 import multiprocessing as mp
 from flower_helpers import train, test
 
@@ -12,9 +11,6 @@ Then uncomment the lines bellow:
 #     del os.environ["https_proxy"]
 # if os.environ.get("http_proxy"):
 #     del os.environ["http_proxy"]
-
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
 def main():
     """Create model, load data, define Flower client, start Flower client."""
@@ -58,7 +54,6 @@ def main():
             return new_parameters, data_size, {}
 
         def evaluate(self, parameters, config):
-
             self.set_parameters(parameters)
             # Prepare multiprocess
             manager = mp.Manager()
