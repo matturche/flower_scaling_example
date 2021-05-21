@@ -1,26 +1,28 @@
 # Scaling Flower with Multiprocessing
 
-## A short Introduction of Federated Learning: 
+## A short Introduction to Federated Learning: 
 
 As recent technologies produce more and more data as they evolve, accessing large quantity of them and training accurate models on them is becoming more and more accessible. However it raises concerns privacy concerns and, to ensure their privacy, people are currently protected by a number of laws depending on where they live (for instance GDPR in Europe). The traditional approach of machine learning consisting in accumulating data in a single spot to train models can’t be blindly applied to personnal data. 
 
-Then Google released in 2016 a new paradigm for training models in such context called Federated Learning and applied it to its Google Keyboard app \need sauce\. It was introduced to leverage the problem in domain difference between the publicly available datasets they trained their model on and the private data users would produce. 
-As specified in the Federated Learning book \need sauce\ , in order for this paradigm to work, it needs to respect 4 main principles which are: 
+Then Google released in 2016 a new paradigm for training models in such context called Federated Learning and applied it to its Google Keyboard app [[1a]](##References) [[1b]](##References). It was introduced to leverage the problem in domain difference between the publicly available datasets they trained their model on and the private data users would produce. 
+As specified in the Federated Learning book [[2]](##References), in order for this paradigm to work, it needs to respect 4 main principles which are: 
 
     • At least 2 entities want to train a model and have data they own and are ready to use it.
     • During training, the data doesn’t leave its original owner.
     • The model can be transferred from one entity to another through protected means.
     • The resulting model performances are a good approximation of the ideal model trained with all data owned by a single entity.
 
-Now this tells us multiple things about Federated Learning, people involved in the training of the model must have given their consent to this training, instead of the data transiting between entities it’s now the model, the transaction has to be protected (using cryptographic means for instance or other techniques such as Differential Privacy) and finally according means must be set to get a good approximation of ideal model. The last point is also telling us that Federated Learning can’t always be applied neither. Its biggest drawback is that, as it is, Federated Learning is sensible to attack from the inside \need sauce\, is not guaranteed to converge \need sauce\ and needs enough clients to achieve its results \need sauce\. However, when applied correctly, it can produces models that couldn’t be obtained through normal means like Google and its Google Keyboard.
+Now this tells us multiple things about Federated Learning, people involved in the training of the model must have given their consent to this training, instead of the data transiting between entities it’s now the model, the transaction has to be protected (using cryptographic means for instance or other techniques such as Differential Privacy) and finally according means must be set to get a good approximation of ideal model. The last point is also telling us that Federated Learning can’t always be applied neither. Its biggest drawbacks are that, as it is, Federated Learning is sensible to attack from the inside [[3]](##References), is not guaranteed to converge [[4]](##References) and needs enough clients to achieve its results [[5]](##References). However, when applied correctly, it can produces models that couldn’t be obtained through normal means like Google and its Google Keyboard.
 
-As of now, only a few frameworks exist to implement it, since it’s a fairly new concept. Tensorflow has developped its own version called Tensorflow Federated \need sauce\ but Pytorch as yet to see its own implementation. They do exist frameworks compatible with PyTorch such as PySyft, developped by OpenMined, another alternative is Flower \need sauce\ which will be the main focus of this post.
+As of now, only a few frameworks exist to implement it, since it’s a fairly new concept. Tensorflow has developped its own version called [Tensorflow Federated](https://www.tensorflow.org/federated) but Pytorch as yet to see its own implementation. They do exist frameworks compatible with PyTorch such as [PySyft](https://github.com/OpenMined/PySyft), developped by OpenMined, another alternative is [Flower](https://flower.dev/) which will be the main focus of this post.
 
 ## The GPU problem:
 
 As I said before, it’s really easy to scale to as much clients as your CPU allows you to. For simple models, CPU is enough and there is no need to extend training on GPU. However when using bigger models or bigger datasets, you might want to move to GPU in order to greatly improve training speed. This is where you can encounter a problem in scaling your Federated setting. Indeed when accessing the GPU, CUDA will automatically allocate a fixed amount of memory so that it has enough room to work with before asking for more. However, this memory can’t be freed at all, until the process exits. This means that if you are launching a 100 clients and sample 10 of them, everytime a client will try to use the GPU, there will be leftover memory that can’t be released in the GPU everytime a new client is sampled. It means that in the long term, your GPU needs as much memory as if you’d sample all 100 clients at once. 
 
-“ Insert GPU images here”
+Here is a short code snippet that shows the problem, this was run on google colaboratory:
+
+![Alt text](./gpu_problem.png?raw=true "Gpu usage")
 
 
 ## How to solve the issue: 
@@ -29,13 +31,13 @@ This problem that  you might have encountered, can be solved quite easily actual
 
 ## Why use Flower:
 
-Flower is a recent framework for Federated Learning, created in 2020. Contrary to Tensorflow Federated and Pysyft which are linked to a single framework, Flower can be used with all of them by design. It focuses on giving the tool for applying Federated Learning efficiently and allows you to focus on the training itself. Implementing a Federated version with Flower is really simple (only 20 lines of codes is enough) and the rewriting needed to adapt a centralized code to a federated one is really low. As well, the range of compatible devices (from mobile devices, to Raspberry Pi, servers and others) is quite large. It’s architecture also allows scalability to 1000s of clients as shown in their paper \need sauce\. It is overall a really great framework to experiment with. 
+Flower is a recent framework for Federated Learning, created in 2020. Contrary to Tensorflow Federated and Pysyft which are linked to a single framework, Flower can be used with all of them by design. It focuses on giving the tool for applying Federated Learning efficiently and allows you to focus on the training itself. Implementing a Federated version with Flower is really simple (only 20 lines of codes is enough) and the rewriting needed to adapt a centralized code to a federated one is really low. As well, the range of compatible devices (from mobile devices, to Raspberry Pi, servers and others) is quite large. It’s architecture also allows scalability to 1000s of clients as shown in their paper [[6]](##References). It is overall a really great framework to experiment with. 
 
 ## How it’s done:
 
-You will first need to install the required dependencies for your project. You should create a new virtual environment to do so. I personally recommend to use poetry `need link here`, as it is easy to install and solves the dependencies for you, but you could also use conda or even a simple environment with venv. I provided all the code used in this blug in the github repository here: `nom du repo` and you can use the pyproject.toml file and the poetry.lock file to initialize your new environment with “poetry install”. If you want to start from scratch, just use “poetry init” to initialize your virtual environment, then use “poetry add library-name” to add the desired library (you will at least need PyTorch, Torchivision, Flower and Numpy to run the example). 
+You will first need to install the required dependencies for your project. You should create a new virtual environment to do so. I personally recommend to use [Poetry](https://python-poetry.org/docs/), as it is easy to install and solves the dependencies for you, but you could also use conda or even a simple environment with venv. I provided all the code used in this blug in the github repository [here](https://github.com/matturche/flower_scaling_example) and you can use the pyproject.toml and poetry.lock files to initialize your new environment with `poetry install`. If you want to start from scratch, just use `poetry init` to initialize your virtual environment, then use `poetry add library-name` to add the desired library (you will at least need PyTorch, Torchivision, Flower and Numpy to run the example). 
 
-Since this example is based on the “Quickstart Pytorch tutorial” `need sauce` from the Flower documentation, I highly recommend to check it out before continuing, since it shows the basics.
+Since this example is based on the [Quickstart Pytorch tutorial](https://flower.dev/docs/quickstart_pytorch.html) from the Flower documentation, I highly recommend to check it out before continuing, since it shows the basics.
 
 ### Helper file 
 
@@ -471,7 +473,15 @@ INFO flower 2021-05-20 11:43:38,739 | app.py:72 | Disconnect and shut down
 
 ```
 
-If for some reason, you get an error telling you the clients can't connect, make sure the server has enough time to set up before clients try to connect to it. Another reason might be because of a known bug with GRPC and python, you can try adding the following lines in your server and client files:
+Opening a new terminal and using the `nvtop` command, we can monitor our GPU usage in real-time: 
+
+![Alt text](./final_gpu_usage.png?raw=true "Gpu monitoring")
+
+We can see that our clients are correctly spawning subprocesses and that the memory is fred everytime they finish their training.
+
+If you get an error caused by "no module named backports.lzma" you can add the package with the `poetry add backports.lzma` command.
+
+If for some reason, you get an error telling you the clients can't connect, make sure the server has enough time to set up before clients try to connect to it. Another reason might be because of a known bug with [GRPC and Python](https://stackoverflow.com/questions/57599354/python-not-able-to-connect-to-grpc-channel-failed-to-connect-to-all-addresse), you can try adding the following lines in your server and client files:
 
 ```python
 import os
@@ -481,4 +491,21 @@ if os.environ.get("http_proxy"):
     del os.environ["http_proxy"]
 ```
 
-All the code is available on GitHub `sauce`. You can now launch as many clients as your CPU allows you and managing your GPU memory as it fits your needs. This concludes this tutorial Hope it will come handy for you, don't hesitate to leave a feedback!
+All the code is available on [GitHub](https://github.com/matturche/flower_scaling_example). You can now launch as many clients as your CPU allows you and managing your GPU memory as it fits your needs. This concludes this tutorial Hope it will come handy for you, don't hesitate to leave a feedback!
+
+## References 
+
+[1a] J. Konečný, H. B. McMahan, F. X. Yu, P. Richtárik, A. T. Suresh, and D. Bacon, “Federated Learning: Strategies for Improving Communication Efficiency,” arXiv:1610.05492 [cs], Oct. 2017, Accessed: May 21, 2021. [Online]. Available: http://arxiv.org/abs/1610.05492
+
+[1b] H. B. McMahan, E. Moore, D. Ramage, S. Hampson, and B. A. y Arcas, “Communication-Efficient Learning of Deep Networks from Decentralized Data,” arXiv:1602.05629 [cs], Feb. 2017, Accessed: May 21, 2021. [Online]. Available: http://arxiv.org/abs/1602.05629
+
+
+[2] Q. Yang, Y. Liu, Y. Cheng, Y. Kang, T. Chen, and H. Yu, “Federated Learning,” Synthesis Lectures on Artificial Intelligence and Machine Learning, vol. 13, no. 3, pp. 1–207, Dec. 2019, doi: 10.2200/S00960ED2V01Y201910AIM043.
+
+[3] A. N. Bhagoji, S. Chakraborty, P. Mittal, and S. Calo, “Analyzing Federated Learning through an Adversarial Lens,” arXiv:1811.12470 [cs, stat], Nov. 2019, Accessed: May 21, 2021. [Online]. Available: http://arxiv.org/abs/1811.12470
+
+[4] C. Yu et al., “Distributed Learning over Unreliable Networks,” arXiv:1810.07766 [cs], May 2019, Accessed: May 21, 2021. [Online]. Available: http://arxiv.org/abs/1810.07766
+
+[5] K. Bonawitz et al., “Towards Federated Learning at Scale: System Design,” arXiv:1902.01046 [cs, stat], Mar. 2019, Accessed: Mar. 19, 2021. [Online]. Available: http://arxiv.org/abs/1902.01046
+
+[6] D. J. Beutel et al., “Flower: A Friendly Federated Learning Research Framework,” arXiv:2007.14390 [cs, stat], Apr. 2021, Accessed: May 21, 2021. [Online]. Available: http://arxiv.org/abs/2007.14390
